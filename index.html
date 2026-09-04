@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Treino">
+<meta name="theme-color" content="#f1f5f9">
+<title>Treino da Semana</title>
+<style>
+    :root {
+        --bg: #f1f5f9;
+        --card: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --cardio: #0891b2;
+        --forca: #4f46e5;
+        --done: #16a34a;
+        --done-bg: #f0fdf4;
+        --danger: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: calc(16px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { width: 100%; max-width: 460px; }
+
+    .resumo {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 16px;
+        position: sticky;
+        top: env(safe-area-inset-top);
+        z-index: 5;
+    }
+    .resumo-topo {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+    .resumo h1 { font-size: 1rem; font-weight: 600; margin: 0; color: var(--muted); }
+    .pct { font-size: 2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+    .barra { height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .barra div {
+        height: 100%; width: 0%;
+        background: var(--forca);
+        border-radius: 999px;
+        transition: width .35s ease, background-color .35s ease;
+    }
+    .resumo-rodape {
+        margin: 10px 0 0;
+        font-size: .85rem;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    details {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--cardio);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    details.forca { border-left-color: var(--forca); }
+    details.pronto { border-left-color: var(--done); background: var(--done-bg); }
+    summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 60px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary:focus-visible { outline: 3px solid var(--forca); outline-offset: -3px; }
+    .dia { font-weight: 700; font-size: 1.05rem; }
+    .treino { font-size: .88rem; color: var(--muted); margin-top: 2px; }
+    details.pronto .dia, details.pronto .treino { color: #15803d; }
+    .contador {
+        font-size: .8rem; font-weight: 600;
+        color: var(--muted);
+        background: #f1f5f9;
+        border-radius: 999px;
+        padding: 5px 10px;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+    details.pronto .contador { background: #dcfce7; color: #15803d; }
+
+    .lista { padding: 0 16px 8px; border-top: 1px solid var(--border); }
+    details.pronto .lista { border-top-color: #bbf7d0; }
+    .ex {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .ex:last-child { border-bottom: none; }
+    .ex input[type="checkbox"] {
+        width: 28px; height: 28px;
+        flex-shrink: 0;
+        accent-color: var(--forca);
+        cursor: pointer;
+    }
+    .ex-txt { flex: 1; min-width: 0; }
+    .ex-nome { font-size: .95rem; line-height: 1.3; display: block; }
+    .ex-det { font-size: .8rem; color: var(--muted); margin-top: 2px; display: block; }
+    .ex.feito .ex-nome { text-decoration: line-through; color: #94a3b8; }
+    .carga {
+        width: 76px;
+        flex-shrink: 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 6px;
+        font-size: 16px; /* 16px evita o zoom automático do Safari ao focar */
+        text-align: center;
+        background: #fff;
+        color: var(--text);
+        font-family: inherit;
+    }
+    .carga::placeholder { color: #cbd5e1; }
+
+    .btn {
+        width: 100%;
+        margin-top: 18px;
+        border: none;
+        border-radius: 10px;
+        padding: 18px;
+        font-size: 1rem;
+        font-weight: 700;
+        font-family: inherit;
+        color: #fff;
+        background: var(--danger);
+        cursor: pointer;
+    }
+    .btn.confirmando { background: #991b1b; }
+    .nota { font-size: .78rem; color: var(--muted); text-align: center; margin-top: 10px; line-height: 1.4; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="resumo">
+        <div class="resumo-topo">
+            <h1>Semana</h1>
+            <span class="pct" id="pct">0%</span>
+        </div>
+        <div class="barra"><div id="barra"></div></div>
+        <p class="resumo-rodape">
+            <span id="itens">0 de 0 itens</span>
+            <span id="dias">0 de 7 dias</span>
+        </p>
+    </div>
+
+    <div id="dashboard"></div>
+
+    <button class="btn" id="reset">Zerar semana</button>
+    <p class="nota">Zerar limpa só os checks. As cargas anotadas ficam salvas para acompanhar a progressão.</p>
+</div>
+
+<script>
+const PLANO = [
+  { id:'seg', dia:'Segunda-feira', tipo:'cardio', treino:'Cardio',
+    itens:[ {id:'seg1', nome:'Caminhada em ritmo acelerado', det:'45–60 min'} ] },
+
+  { id:'ter', dia:'Terça-feira', tipo:'cardio', treino:'Descanso ativo',
+    itens:[ {id:'ter1', nome:'Caminhada leve (ou descanso total)', det:'30–40 min'} ] },
+
+  { id:'qua', dia:'Quarta-feira', tipo:'cardio', treino:'Cardio',
+    itens:[ {id:'qua1', nome:'Caminhada em ritmo acelerado', det:'45–60 min'} ] },
+
+  { id:'qui', dia:'Quinta-feira', tipo:'forca', treino:'Treino A — Superiores',
+    itens:[
+      {id:'qui0', nome:'Aquecimento', det:'10–15 min esteira ou bike'},
+      {id:'qui1', nome:'Supino reto', det:'3 × 8–12 · barra ou halteres', carga:true},
+      {id:'qui2', nome:'Puxada frontal', det:'3 × 8–12 · polia alta', carga:true},
+      {id:'qui3', nome:'Desenvolvimento com halteres', det:'3 × 8–12 · ombros', carga:true},
+      {id:'qui4', nome:'Remada curvada ou remada baixa', det:'3 × 8–12', carga:true},
+      {id:'qui5', nome:'Rosca direta', det:'3 × 10–15 · bíceps', carga:true},
+      {id:'qui6', nome:'Tríceps pulley', det:'3 × 10–15 · polia', carga:true}
+    ] },
+
+  { id:'sex', dia:'Sexta-feira', tipo:'forca', treino:'Treino B — Inferiores + abdômen',
+    itens:[
+      {id:'sex0', nome:'Aquecimento', det:'10–15 min esteira ou bike'},
+      {id:'sex1', nome:'Leg press 45º', det:'3 × 10–12', carga:true},
+      {id:'sex2', nome:'Cadeira extensora', det:'3 × 12–15', carga:true},
+      {id:'sex3', nome:'Cadeira ou mesa flexora', det:'3 × 10–12 · posterior', carga:true},
+      {id:'sex4', nome:'Panturrilha (leg press ou sentada)', det:'4 × 15–20', carga:true},
+      {id:'sex5', nome:'Prancha isométrica', det:'3 séries · até 1 min'}
+    ] },
+
+  { id:'sab', dia:'Sábado', tipo:'forca', treino:'Treino C — Superiores',
+    itens:[
+      {id:'sab0', nome:'Aquecimento', det:'10–15 min esteira ou bike'},
+      {id:'sab1', nome:'Supino inclinado', det:'3 × 8–12 · halteres ou máquina', carga:true},
+      {id:'sab2', nome:'Remada unilateral (serrote)', det:'3 × 8–12 cada lado', carga:true},
+      {id:'sab3', nome:'Elevação lateral', det:'4 × 12–15 · ombros', carga:true},
+      {id:'sab4', nome:'Crucifixo invertido ou face pull', det:'3 × 12–15', carga:true},
+      {id:'sab5', nome:'Rosca martelo', det:'3 × 10–12', carga:true},
+      {id:'sab6', nome:'Tríceps testa', det:'3 × 10–12 · halteres ou barra W', carga:true}
+    ] },
+
+  { id:'dom', dia:'Domingo', tipo:'forca', treino:'Treino D — Inferiores + abdômen',
+    itens:[
+      {id:'dom0', nome:'Aquecimento', det:'10–15 min esteira ou bike'},
+      {id:'dom1', nome:'Agachamento goblet ou hack machine', det:'3 × 8–12', carga:true},
+      {id:'dom2', nome:'Stiff / levantamento terra romeno', det:'3 × 8–12 · atenção à coluna', carga:true},
+      {id:'dom3', nome:'Cadeira flexora', det:'3 × 12–15', carga:true},
+      {id:'dom4', nome:'Panturrilha em pé', det:'4 × 15–20', carga:true},
+      {id:'dom5', nome:'Abdominal supra', det:'3 × 15–20'}
+    ] }
+];
+
+const CHAVE = 'treino:semana:v2';
+let estado = { checks: {}, cargas: {} };
+const temStorageClaude = typeof window.storage !== 'undefined' && !!window.storage;
+
+async function carregar() {
+    try {
+        if (temStorageClaude) {
+            const r = await window.storage.get(CHAVE);
+            return r && r.value ? JSON.parse(r.value) : null;
+        }
+        const bruto = localStorage.getItem(CHAVE);
+        return bruto ? JSON.parse(bruto) : null;
+    } catch (e) { return null; }
+}
+
+let timerSalvar;
+function salvar() {
+    clearTimeout(timerSalvar);
+    timerSalvar = setTimeout(async () => {
+        try {
+            const txt = JSON.stringify(estado);
+            if (temStorageClaude) { await window.storage.set(CHAVE, txt); }
+            else { localStorage.setItem(CHAVE, txt); }
+        } catch (e) { /* sem persistência: mantém na sessão */ }
+    }, 250);
+}
+
+function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render() {
+    document.getElementById('dashboard').innerHTML = PLANO.map(d => `
+      <details class="${d.tipo === 'forca' ? 'forca' : ''}" data-dia="${d.id}">
+        <summary>
+          <div>
+            <div class="dia">${esc(d.dia)}</div>
+            <div class="treino">${esc(d.treino)}</div>
+          </div>
+          <span class="contador" data-cont="${d.id}">0/${d.itens.length}</span>
+        </summary>
+        <div class="lista">
+          ${d.itens.map(it => `
+            <label class="ex" data-ex="${it.id}">
+              <input type="checkbox" data-check="${it.id}">
+              <span class="ex-txt">
+                <span class="ex-nome">${esc(it.nome)}</span>
+                <span class="ex-det">${esc(it.det)}</span>
+              </span>
+              ${it.carga ? `<input class="carga" type="text" inputmode="decimal" placeholder="kg" data-carga="${it.id}" aria-label="Carga em ${esc(it.nome)}">` : ''}
+            </label>`).join('')}
+        </div>
+      </details>`).join('');
+}
+
+function pintar() {
+    let feitos = 0, total = 0, diasProntos = 0;
+
+    PLANO.forEach(d => {
+        let f = 0;
+        d.itens.forEach(it => {
+            const marcado = estado.checks[it.id] === true;
+            if (marcado) f++;
+            const cb = document.querySelector(`[data-check="${it.id}"]`);
+            cb.checked = marcado;
+            cb.closest('.ex').classList.toggle('feito', marcado);
+            if (it.carga) {
+                const inp = document.querySelector(`[data-carga="${it.id}"]`);
+                if (document.activeElement !== inp) inp.value = estado.cargas[it.id] || '';
+            }
+        });
+        feitos += f; total += d.itens.length;
+        const completo = f === d.itens.length;
+        if (completo) diasProntos++;
+        document.querySelector(`[data-cont="${d.id}"]`).textContent = f + '/' + d.itens.length;
+        document.querySelector(`[data-dia="${d.id}"]`).classList.toggle('pronto', completo);
+    });
+
+    const pct = total ? Math.round(feitos / total * 100) : 0;
+    document.getElementById('pct').textContent = pct + '%';
+    const barra = document.getElementById('barra');
+    barra.style.width = pct + '%';
+    barra.style.backgroundColor = pct === 100 ? 'var(--done)' : 'var(--forca)';
+    document.getElementById('itens').textContent = feitos + ' de ' + total + ' itens';
+    document.getElementById('dias').textContent = diasProntos + ' de ' + PLANO.length + ' dias';
+}
+
+document.addEventListener('change', e => {
+    const id = e.target.dataset.check;
+    if (!id) return;
+    estado.checks[id] = e.target.checked;
+    pintar();
+    salvar();
+});
+
+document.addEventListener('input', e => {
+    const id = e.target.dataset.carga;
+    if (!id) return;
+    estado.cargas[id] = e.target.value;
+    salvar();
+});
+
+const btn = document.getElementById('reset');
+let armado = false, timerBtn;
+btn.addEventListener('click', () => {
+    if (!armado) {
+        armado = true;
+        btn.textContent = 'Toque de novo para confirmar';
+        btn.classList.add('confirmando');
+        timerBtn = setTimeout(() => {
+            armado = false;
+            btn.textContent = 'Zerar semana';
+            btn.classList.remove('confirmando');
+        }, 4000);
+        return;
+    }
+    clearTimeout(timerBtn);
+    armado = false;
+    btn.textContent = 'Zerar semana';
+    btn.classList.remove('confirmando');
+    estado.checks = {};
+    pintar();
+    salvar();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+(async function iniciar() {
+    render();
+    const salvo = await carregar();
+    if (salvo) estado = { checks: salvo.checks || {}, cargas: salvo.cargas || {} };
+    pintar();
+})();
+</script>
+</body>
+</html>
